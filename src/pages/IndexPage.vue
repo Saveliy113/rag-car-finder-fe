@@ -82,13 +82,37 @@ const { messages, loading } = storeToRefs(chatStore);
 const prompt = ref('');
 const messagesContainer = ref<HTMLDivElement | null>(null);
 
-const scrollToBottom = () => {
+const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
   const el = messagesContainer.value;
   if (!el) {
     return;
   }
 
+  if (typeof el.scrollTo === 'function') {
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior,
+    });
+    return;
+  }
+
   el.scrollTop = el.scrollHeight;
+};
+
+const scheduleScrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  void nextTick(() => {
+    window.requestAnimationFrame(() => {
+      try {
+        scrollToBottom(behavior);
+      } catch (error) {
+        console.error('Error scrolling to bottom:', error);
+      }
+    });
+  });
 };
 
 const formatTimestamp = (value: string) =>
@@ -117,21 +141,17 @@ const handleSubmit = async () => {
   }
 };
 
-onMounted(async () => {
+onMounted(() => {
   chatStore.initFromStorage();
-  await nextTick();
-  scrollToBottom();
+  scheduleScrollToBottom();
 });
 
 watch(
   () => messages.value.length,
-  async () => {
-    try {
-      await nextTick(scrollToBottom);
-    } catch (error) {
-      console.error('Error scrolling to bottom:', error);
-    }
-  }
+  () => {
+    scheduleScrollToBottom('smooth');
+  },
+  { flush: 'post' }
 );
 </script>
 
