@@ -97,10 +97,15 @@ export const useChatStore = defineStore('chat', {
       this.loading = true;
 
       try {
-        const { data } = await api.post('/search', { query });
+        const { data: { data: responseData } } = await api.post('/rag/search', {
+          question: query,
+          top_k: 10,
+        });
+
+        console.log('data: ', responseData)
         const answer =
-          typeof data?.answer === 'string' && data.answer.trim().length > 0
-            ? data.answer.trim()
+          typeof responseData === 'string' && responseData.trim().length > 0
+            ? responseData.trim()
             : 'No answer returned by the service.';
 
         this.appendMessage('assistant', answer);
