@@ -52,6 +52,7 @@
             class="chat-textarea"
             input-class="text-white"
             color="white"
+            @keydown.enter.prevent="handleSubmit"
           />
           <q-btn
             type="submit"
